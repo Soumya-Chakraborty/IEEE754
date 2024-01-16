@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IEEE 754 Converter</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(to right, #ff8a00, #da1b60);
+            color: #fff;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .container {
+            text-align: center;
+            background-color: rgba(51, 51, 51, 0.8);
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+            opacity: 0;
+            animation: fadeIn 1s ease forwards;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        h1 {
+            color: #ffcc00;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        input {
+            padding: 8px;
+            width: 100%;
+            margin-bottom: 15px;
+            background-color: #555;
+            color: #fff;
+            border: 1px solid #666;
+        }
+
+        button {
+            background-color: #ff4500;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #ff0000;
+        }
+
+        #stepsContainer {
+            margin-top: 20px;
+        }
+
+        h2 {
+            color: #ffcc00;
+        }
+
+        div[id^="step"] {
+            margin-bottom: 10px;
+        }
+
+        p {
+            margin-top: 20px;
+        }
+
+        #ieee754Output {
+            font-weight: bold;
+            color: #ffcc00;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>IEEE 754 Converter</h1>
+        <label for="decimalInput">Enter Decimal Number:</label>
+        <input type="text" id="decimalInput" placeholder="Enter decimal number">
+        <button onclick="startConversion()">Start Conversion</button>
+
+        <div id="stepsContainer" style="display:none;">
+            <h2>Conversion Steps:</h2>
+            <div id="step1"></div>
+            <div id="step2"></div>
+            <div id="step3"></div>
+            <div id="step4a"></div>
+            <div id="step4b"></div>
+            <div id="step5"></div>
+            <div id="step6"></div>
+        </div>
+
+        <p>IEEE 754 Code: <span id="ieee754Output"></span></p>
+    </div>
+
+    <script>
+        function startConversion() {
+            const decimalInput = document.getElementById('decimalInput').value;
+
+            if (decimalInput.trim() === '') {
+                alert('Please enter a valid decimal number');
+                return;
+            }
+
+            // Display the steps container
+            document.getElementById('stepsContainer').style.display = 'block';
+
+            // Step 1: Determine the sign bit
+            const signBit = (parseFloat(decimalInput) < 0) ? 1 : 0;
+            document.getElementById('step1').innerText = `Step 1: Sign Bit is ${signBit}`;
+
+            // Step 2: Convert the absolute value to binary
+            const binaryValue = Math.abs(parseFloat(decimalInput)).toString(2);
+            document.getElementById('step2').innerText = `Step 2: Convert to Binary: ${binaryValue}`;
+
+            // Step 3: Normalize the binary value
+            const normalizedBinary = normalizeBinary(binaryValue);
+            document.getElementById('step3').innerText = `Step 3: Normalize Binary: ${normalizedBinary}`;
+
+            // Step 4a: Calculate Exponent
+            const exponent = normalizedBinary.length - 1;
+            document.getElementById('step4a').innerText = `Step 4a: Exponent: ${exponent} + 127`;
+            // Step 4b: Calculate Biased Exponent
+            const biasedExponent = calculateBiasedExponent(exponent);
+            document.getElementById('step4b').innerText = `Step 4b: Biased Exponent: ${biasedExponent}`;
+
+            // Step 5: Extract Mantissa
+            const mantissa = extractMantissa(normalizedBinary);
+            document.getElementById('step5').innerText = `Step 5: Mantissa: ${mantissa}`;
+
+            // Step 6: Combine sign bit, biased exponent, and mantissa
+            const ieee754Representation = signBit + biasedExponent + mantissa;
+            document.getElementById('step6').innerText = `Step 6: IEEE 754 Representation: ${insertSpaces(ieee754Representation)}`;
+
+            // Display the final IEEE 754 code
+            document.getElementById('ieee754Output').innerText = `${insertSpaces(ieee754Representation)}`;
+        }
+
+        // Function to insert spaces for better readability
+        function insertSpaces(binaryString) {
+            const signBit = binaryString.substring(0, 1);
+            const exponentBits = binaryString.substring(1, 9);
+            const mantissaBits = binaryString.substring(9);
+
+            return `${signBit} ${exponentBits} ${mantissaBits}`;
+        }
+
+        function normalizeBinary(binaryValue) {
+            // If the binary value has a decimal point, remove it
+            if (binaryValue.includes('.')) {
+                binaryValue = binaryValue.replace('.', '');
+            }
+
+            // Find the position of the first '1' after the decimal point
+            const indexOfOne = binaryValue.indexOf('1');
+
+            // Normalize the binary value by shifting the decimal point
+            return binaryValue.substring(indexOfOne - 1);
+        }
+
+        function calculateBiasedExponent(exponent) {
+            // Bias for 32-bit IEEE 754 format is 127
+            const bias = 127;
+
+            // Calculate the biased exponent
+            return (exponent + bias).toString(2).padStart(8, '0');
+        }
+
+        function extractMantissa(normalizedBinary) {
+            // Extract the mantissa (excluding the leading '1')
+            return normalizedBinary.substring(1, 24).padEnd(23, '0');
+        }
+    </script>
+</body>
+
+</html>
